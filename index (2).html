@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DEIUS 機密資料庫</title>
+  <style>
+    body {
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 700px;
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    input[type="password"] {
+      padding: 8px;
+      font-size: 16px;
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #444;
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background-color: #444;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .data-block {
+      text-align: left;
+      background-color: #111;
+      border: 1px solid #333;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 8px;
+    }
+
+    .data-block img {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 6px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      color: #f44336;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>DEIUS 實驗資料庫</h1>
+    <div id="login">
+      <p>請輸入密碼以解鎖資料：</p>
+      <input type="password" id="passwordInput" placeholder="輸入密碼" />
+      <br>
+      <button onclick="checkPassword()">解鎖</button>
+      <p id="errorMsg" class="error hidden">密碼錯誤。</p>
+    </div>
+
+    <div id="dataSection" class="hidden">
+      <h2>實驗對象名單</h2>
+      <div id="subjectList"></div>
+    </div>
+  </div>
+
+  <script>
+    const CORRECT_PASSWORD = "DE9834065"; // 修改這裡可改密碼
+
+    // 實驗者資料（含頭像）
+    const subjects = [
+  {
+    id: "A-001",
+    name: "伊芙 Eve",
+    status: "穩定",
+    ability: "食物警惕性",
+    note: "繼承了鼠族的天性，對於周遭的食物警惕性有所上升。",
+    avatar: "https://media.discordapp.net/attachments/1158259135763185764/1399961663796412437/01.png?ex=688ae766&is=688995e6&hm=f31c68dda65698535e73e4597b245e9921c81f798c00b3071da65c54a87ab1bb&=&format=webp&quality=lossless&width=570&height=713"
+  },
+  {
+    id: "A-002",
+    name: "凜雪 Rin",
+    status: "失控後回收",
+    ability: "攻擊策略性",
+    note: "基於狐族的能力，在戰鬥中可以進行狡猾的戰術，但情況不穩定，實驗體有失控的跡象。",
+    avatar: "https://media.discordapp.net/attachments/1158259135763185764/1399961664220172378/02.png?ex=688ae766&is=688995e6&hm=cd853d104f7ca36670c87ba48f1796add2a857f9aac65a4e28ff0ee0c547417d&=&format=webp&quality=lossless&width=566&height=707"
+  },
+  {
+    id: "A-003",
+    name: "赫魯 Hru",
+    status: "穩定",
+    ability: "聽力增强性",
+    note: "在兔族的基因影響下，聽力上升，變得能輕易察覺到周圍的動靜。實驗體也因此變得一驚一乍地，需要實驗人員進行安撫。",
+    avatar: "https://media.discordapp.net/attachments/1158259135763185764/1399961664631078964/03.png?ex=688ae766&is=688995e6&hm=d4fda4cc7bc3c33ff65e98c35fa49b92963ebe5f18dcdb4a4b7ad9dffeb83526&=&format=webp&quality=lossless&width=566&height=707"
+  },
+  {
+    id: "A-004",
+    name: "王月 Moon",
+    status: "穩定",
+    ability: "注意力集中性",
+    note: "繼承了貓族的捕獵天賦，可以輕易地專注於任何事情上。不過該實驗題總是會讓人有種不寒而慄的感覺，已經有多位研究人員向上層舉報。",
+    avatar: "https://media.discordapp.net/attachments/1158259135763185764/1399961665092587692/04.png?ex=688ae766&is=688995e6&hm=82714f647fe2cecae161fa4a6d79f55638af192bc57defe4000a946cc3e5580c&=&format=webp&quality=lossless&width=561&height=702"
+  },
+  {
+    id: "A-005",
+    name: "敏莉亞 Minlya",
+    status: "失控後陣亡",
+    ability: "進攻强化性",
+    note: "在戰鬥中展現出了與犬族相似的進攻欲望，但因爲控制不當在實驗中當場身亡。",
+    avatar: "https://media.discordapp.net/attachments/1158259135763185764/1399961665382121544/05.png?ex=688ae767&is=688995e7&hm=84b609aa281389bf85c5e4969e65b2c66283d3da503d294d3944e47b5b705552&=&format=webp&quality=lossless&width=563&height=704"
+  },
+  {
+    id: "A-006",
+    name: "楊央 Yang",
+    status: "穩定",
+    ability: "食草天性",
+    note: "植入了羊族的基因後，該實驗體可以直接生吃草，且不會有任何消化問題。但該實驗體似乎會對任何的羊類食品感到警惕和憤怒，請相關實驗人員近期不要吃羊肉料理。",
+    avatar: "https://media.discordapp.net/attachments/1158259135763185764/1399961665629323375/06.png?ex=688ae767&is=688995e7&hm=99d89ba55a4aeeb5270bfe4c14f2257b6ba443003d801df416f9bbcd174d6b50&=&format=webp&quality=lossless&width=564&height=705"
+  },
+  {
+    id: "A-007",
+    name: "桃悠 Momoka",
+    status: "失蹤",
+    ability: "ALPHA",
+    note: "自10年前失蹤後，再無記錄。",
+    avatar: "https://media.discordapp.net/attachments/1158259135763185764/1399961665855819816/07.png?ex=688ae767&is=688995e7&hm=4d823e42f06d5a624e2e2982eb0ace344028b44cf4fbeeefc6975aafbe089eab&=&format=webp&quality=lossless&width=563&height=704"
+  }
+];
+
+    function checkPassword() {
+      const input = document.getElementById("passwordInput").value;
+      const error = document.getElementById("errorMsg");
+      if (input === CORRECT_PASSWORD) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("dataSection").classList.remove("hidden");
+        renderSubjects();
+      } else {
+        error.classList.remove("hidden");
+      }
+    }
+
+    function renderSubjects() {
+      const container = document.getElementById("subjectList");
+      container.innerHTML = "";
+      subjects.forEach(subj => {
+        const block = document.createElement("div");
+        block.className = "data-block";
+        block.innerHTML = `
+          <img src="${subj.avatar}" alt="${subj.name} 頭像">
+          <strong>ID:</strong> ${subj.id}<br>
+          <strong>姓名:</strong> ${subj.name}<br>
+          <strong>狀態:</strong> ${subj.status}<br>
+          <strong>能力:</strong> ${subj.ability}<br>
+          <strong>備註:</strong> ${subj.note}
+        `;
+        container.appendChild(block);
+      });
+    }
+  </script>
+
+</body>
+</html>
+
